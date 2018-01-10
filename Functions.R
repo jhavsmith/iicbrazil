@@ -1,0 +1,149 @@
+#-------------------------------------------------------------------------------
+#------------------------------Functions needed---------------------------------
+#------------------------------------------------------------------------------
+
+
+#---------------Time index to extract from the IBIS data--------------------------
+
+make.time.index = function(start.year,end.year) {
+  n.years = end.year-start.year
+  months = rep(c(1:12),n.years)
+  years = rep(start.year,length(months))
+  years.months = cbind(years,months)
+  n.rows = nrow(years.months)
+  year.intervals = cbind(seq(1,n.rows,12),c(seq(12,n.rows,12)))
+  for(i in 1:nrow(year.intervals)) {
+    years.months[c(year.intervals[i,1]:year.intervals[i,2]),1] = (start.year-1)+i
+  }
+  years.months = paste(years.months[,1],years.months[,2])
+  return(years.months)
+}
+
+#-------------------Grids from Tapajos data for 1km cells-----------------------
+
+small.grid <- function(all.coords,xcoord,ycoord,xgap,ygap){
+  xdiff = min(dist(unique(all.coords$X)))/2
+  ydiff = min(dist(unique(all.coords$Y)))/2
+  xleft = all.coords$X - xdiff
+  xright = all.coords$X + xdiff
+  ydown = all.coords$Y - ydiff
+  yup = all.coords$Y + ydiff
+  
+  xgap = xgap/2
+  ygap = ygap/2
+  
+  newdata = cbind(all.coords,xleft,xright,ydown,yup)
+  left.id = which((newdata$xleft<(xcoord-xgap)) & (newdata$xright>(xcoord-xgap)))
+  right.id = which((newdata$xleft<(xcoord+xgap)) & (newdata$xright>(xcoord+xgap)))
+  down.id = which((newdata$ydown<(ycoord-ygap)) & (newdata$yup>(ycoord-ygap)))
+  up.id = which((newdata$ydown<(ycoord+ygap)) & (newdata$yup>(ycoord+ygap)))
+  
+  left.down = intersect(left.id,down.id)
+  left.up = intersect(left.id,up.id)
+  right.up = intersect(right.id,up.id)
+  right.down = intersect(right.id,down.id)
+  
+  cell.no = left.down
+  cell.prop = 1
+  cell.details = cbind(all.coords[cell.no,],cell.prop)
+  
+  if (left.down==left.up){
+    if (right.down != left.down){
+      cell.no = c(left.down,right.down)
+      left.prop = (newdata[left.down,]$xright - (xcoord-xgap))/(xgap*2)
+      cell.prop = c(left.prop,1-left.prop)
+      cell.details = cbind(all.coords[cell.no,],cell.prop)
+    }
+  } else{
+    if (right.down == left.down){
+      cell.no = c(left.down,left.up)
+      left.prop = (newdata[left.down,]$yup - (ycoord-ygap))/(ygap*2)
+      cell.prop = c(left.prop,1-left.prop)
+      cell.details = cbind(all.coords[cell.no,],cell.prop)
+    } else{
+      cell.no = c(left.up,left.down,right.down,right.up)
+      up.prop = ((ycoord+ygap) - newdata[left.up,]$ydown)/(ygap*2)
+      left.prop = (newdata[left.down,]$xright - (xcoord-xgap))/(xgap*2)
+      cell.prop = c(up.prop*left.prop,(1-up.prop)*left.prop,
+                    (1-up.prop)*(1-left.prop),up.prop*(1-left.prop))
+      cell.details = cbind(all.coords[cell.no,],cell.prop)
+    }
+  }
+  
+  return(cell.details)
+}
+
+#-----------Grids from deforestation data for IBIS cells-----------------------
+
+big.grids <- function(all.coords,xcoord,ycoord){
+  xleft = xcoord - 0.25
+  xright = xcoord + 0.25
+  ydown = ycoord - 0.25
+  yup = ycoord + 0.25
+  xid = which((all.coords$X>xleft) & (all.coords$X<xright))
+  yid = which((all.coords$Y>ydown) & (all.coords$Y<yup))
+  common.id = intersect(xid,yid)
+  if (length(common.id)>0){
+    return(all.coords[common.id,])
+  } else{
+    return()
+  }
+}
+
+#---------------------Missing data analysis for IBIS data-----------------------
+
+estimate.missing.data <- function(datafile){
+  row.no = dim(datafile)[1]
+  
+  while (sum(is.na(datafile))>0){
+    for (i in 1:row.no){
+      missing.idx = which(is.na(datafile[i,])==TRUE)
+      if (length(missing.idx)>0){
+        xcoord = c((datafile$X[i]-0.5),datafile$X[i],(datafile$X[i]+0.5))
+        ycoord = c((datafile$Y[i]-0.5),datafile$Y[i],(datafile$Y[i]+0.5))
+        neighbours = expand.grid(xcoord,ycoord)
+        year.month = which((datafile$year==datafile$year[i]) & (datafile$month==datafile$month[i]))
+        partdata = datafile[year.month,]
+        idx = which(((partdata$X %in% neighbours$Var1)==1) & ((partdata$Y %in% neighbours$Var2)==1))
+        datafile[i,missing.idx] = colMeans(partdata[idx,missing.idx],na.rm = T)
+      }
+    }
+  }
+  return(datafile)
+}
+
+#------------------Perform the analysis using both models--------------------
+
+# Format of historic data:
+
+# X, Y (two columns for coordinate system)
+# Year, Month (from 2000 Jan to 2014 Dec)
+# nonforest (amount of non forest cover in that month)
+# deforest (amount deforested till that month)
+# nodata, water, clouds, forest (current situation - will be same for every unique x,y)
+# IBIS model columns (12 columns - Evap,...,PAW)
+
+# The historic data will be of 180N-by-22 dimension, N being the number of cells
+
+data.analysis <- function(tapajos,tucurui,energy.var,indep.var){
+  
+  tucurui.xy = c(-49.646667,-3.831667)
+  tapajos.xy = c(-56.2845,-4.603722)
+  formula1 = paste(energy.var,paste(indep.var,"factor(Month)",sep="+"),sep="~")
+  model1 <- lm(formula(formula1),tapajos)
+  formula2 = paste(energy.var,paste(indep.var,"Dam.dist+Time.diff+factor(Month)",sep="+"),sep = "~")
+  model2 <- lm(formula(formula2),tucurui)
+  predict.tapajos <- function(newdata){
+    xy = data.matrix(newdata[,c("X","Y")])
+    dam.dist.mat = t(tapajos.xy-t(xy))
+    dam.dist = 1/(sqrt(rowSums(dam.dist.mat^2))+0.01)
+    time.dist = (newdata$Year-2025)*12 + newdata$Month
+    out = predict(model1,newdata) + dam.dist*model2$coefficients[3] + time.dist*model2$coefficients[4]
+    return(out)
+  }
+  return(list(model1=model1,model2=model2,predict.tapajos=predict.tapajos))
+}
+
+
+
+

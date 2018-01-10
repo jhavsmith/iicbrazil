@@ -1,0 +1,118 @@
+@article{sahu2006spatio,
+  title={Spatio-temporal modeling of fine particulate matter},
+  author={Sahu, Sujit K and Gelfand, Alan E and Holland, David M},
+  journal={Journal of Agricultural, Biological, and Environmental Statistics},
+  volume={11},
+  number={1},
+  pages={61--86},
+  year={2006},
+  publisher={Springer}
+}
+
+
+@article{cochrane1999positive,
+  title={Positive feedbacks in the fire dynamic of closed canopy tropical forests},
+  author={Cochrane, Mark A and Alencar, Ane and Schulze, Mark D and Souza, Carlos M and Nepstad, Daniel C and Lefebvre, Paul and Davidson, Eric A},
+  journal={Science},
+  volume={284},
+  number={5421},
+  pages={1832--1835},
+  year={1999},
+  publisher={American Association for the Advancement of Science}
+}
+
+@article{castello2015large,
+  title={Large-scale degradation of Amazonian freshwater ecosystems},
+  author={Castello, Leandro and Macedo, Marcia N},
+  journal={Global change biology},
+  year={2015},
+  publisher={Wiley Online Library}
+}
+
+@article{silverio2015agricultural,
+  title={Agricultural expansion dominates climate changes in southeastern Amazonia: the overlooked non-GHG forcing},
+  author={Silv{\'e}rio, Divino V and Brando, Paulo M and Macedo, Marcia N and Beck, Pieter SA and Bustamante, Mercedes and Coe, Michael T},
+  journal={Environmental Research Letters},
+  volume={10},
+  number={10},
+  pages={104015},
+  year={2015},
+  publisher={IOP Publishing}
+}
+
+@article{coe2009influence,
+  title={The influence of historical and potential future deforestation on the stream flow of the Amazon River--Land surface processes and atmospheric feedbacks},
+  author={Coe, Michael T and Costa, Marcos H and Soares-Filho, Britaldo S},
+  journal={Journal of Hydrology},
+  volume={369},
+  number={1},
+  pages={165--174},
+  year={2009},
+  publisher={Elsevier}
+}
+
+@article{alencar2015landscape,
+  title={Landscape fragmentation, severe drought, and the new Amazon forest fire regime},
+  author={Alencar, Ane A and Brando, Paulo M and Asner, Gregory P and Putz, Francis E},
+  journal={Ecological applications},
+  volume={25},
+  number={6},
+  pages={1493--1505},
+  year={2015},
+  publisher={Wiley Online Library}
+}
+
+@article{foley1996integrated,
+  title={An integrated biosphere model of land surface processes, terrestrial carbon balance, and vegetation dynamics},
+  author={Foley, Jonathan A and Prentice, I Colin and Ramankutty, Navin and Levis, Samuel and Pollard, David and Sitch, Steven and Haxeltine, Alex},
+  journal={Global Biogeochemical Cycles},
+  volume={10},
+  number={4},
+  pages={603--628},
+  year={1996},
+  publisher={Wiley Online Library}
+}
+
+@article{stickler2013dependence,
+  title={Dependence of hydropower energy generation on forests in the Amazon Basin at local and regional scales},
+  author={Stickler, Claudia M and Coe, Michael T and Costa, Marcos H and Nepstad, Daniel C and McGrath, David G and Dias, Livia CP and Rodrigues, Hermann O and Soares-Filho, Britaldo S},
+  journal={Proceedings of the National Academy of Sciences},
+  volume={110},
+  number={23},
+  pages={9601--9606},
+  year={2013},
+  publisher={National Acad Sciences}
+}
+
+@article{panday2015deforestation,
+  title={Deforestation offsets water balance changes due to climate variability in the Xingu River in eastern Amazonia},
+  author={Panday, Prajjwal K and Coe, Michael T and Macedo, Marcia N and Lefebvre, Paul and de Almeida Castanho, Andrea D},
+  journal={Journal of Hydrology},
+  volume={523},
+  pages={822--829},
+  year={2015},
+  publisher={Elsevier}
+}
+
+@article{kucharik2000testing,
+  title={Testing the performance of a dynamic global ecosystem model: water balance, carbon balance, and vegetation structure},
+  author={Kucharik, Christopher J and Foley, Jonathan A and Delire, Christine and Fisher, Veronica A and Coe, Michael T and Lenters, John D and Young-Molling, Christine and Ramankutty, Navin and Norman, John M and Gower, Stith T},
+  journal={Global Biogeochemical Cycles},
+  volume={14},
+  number={3},
+  pages={795--825},
+  year={2000},
+  publisher={Wiley Online Library}
+}
+
+@article{ramankutty1998characterizing,
+  title={Characterizing patterns of global land use: An analysis of global croplands data},
+  author={Ramankutty, Navin and Foley, Jonathan A},
+  journal={Global Biogeochemical Cycles},
+  volume={12},
+  number={4},
+  pages={667--685},
+  year={1998},
+  publisher={Wiley Online Library}
+}
+

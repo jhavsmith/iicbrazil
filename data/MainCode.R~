@@ -1,0 +1,187 @@
+setwd("C:/Academics/Chicago/ThirdYear/IIC/Dam-Project/Data/Code/")
+
+library(raster)
+library(rgdal)
+library(foreign)
+library(RNetCDF)
+library(ncdf4)
+library(compare)
+
+
+#-------------------------------------------------------------------------------
+#------------------------Deforestation and IBIS Data-------------------------------------
+#------------------------------------------------------------------------------
+
+setwd("C:/Academics/Chicago/ThirdYear/IIC/Dam-Project/Data/Code/")
+
+hist.tucurui = read.csv("formatted-historic-tucurui.csv")
+hist.tapajos = read.csv("formatted-historic-tapajos.csv")
+future.tapajos = read.csv("formatted-future-tapajos.csv")
+
+hist.tucurui = hist.tucurui[complete.cases(hist.tucurui[,c("X","Y")]),]
+hist.tapajos = hist.tapajos[complete.cases(hist.tapajos[,c("X","Y")]),]
+future.tapajos = future.tapajos[complete.cases(future.tapajos[,c("X","Y")]),]
+
+dim(hist.tucurui)
+dim(hist.tapajos)
+dim(future.tapajos)
+
+tapajos.grass = read.csv("tapajos-grass.csv")
+tapajos.forest = read.csv("tapajos-forest.csv")
+
+tucurui.grass = read.csv("tucurui-grass.csv")
+tucurui.forest = read.csv("tucurui-forest.csv")
+
+dim(tapajos.grass)
+dim(tapajos.forest)
+
+dim(tucurui.grass)
+dim(tucurui.forest)
+
+tucurui.xy = c(-49.646667,-3.831667)
+tapajos.xy = c(-56.2845,-4.603722)
+
+
+#-------------------------------------------------------------------------------
+#---------------Prepare the historic data for the Tapajos basin---------------------------
+#------------------------------------------------------------------------------
+
+N = dim(hist.tapajos)[1]
+
+ibisxy = tapajos.grass[,c("X","Y")]
+
+all.coords = unique(hist.tapajos[,c("X","Y")])
+tempdata = hist.tapajos[,c(6:12,14:29)]
+names(tempdata)[8] = "Def00"
+tempdata$Def00 = hist.tapajos$Def97 + hist.tapajos$Def98_00
+
+tempdata[,8:23] = t(apply(t(tempdata[,8:23]),2,cumsum))
+
+unique.xy = unique(tapajos.forest[,c("X","Y")])
+no.of.timepoints = dim(unique(tapajos.forest[,c("year","month")]))[1]
+model1data = c()
+
+for (i in 1:dim(unique.xy)[1]){
+  xcoord = unique.xy$X[i]
+  ycoord = unique.xy$Y[i]
+  idx = which((tapajos.forest$X==xcoord) & (tapajos.forest$Y==ycoord))
+  grass.energy = as.matrix(tapajos.grass[idx,5:16])
+  for.energy = as.matrix(tapajos.forest[idx,5:16])
+  grids = big.grids(all.coords,xcoord,ycoord)
+  X = rep(xcoord,no.of.timepoints)
+  Y = rep(ycoord,no.of.timepoints)
+  year = tapajos.forest$year[idx]
+  month = tapajos.forest$month[idx]
+  year.def.col = 6+year-2000
+  deforest = numeric(no.of.timepoints)
+  nonforest = numeric(no.of.timepoints)
+  forest = numeric(no.of.timepoints)
+  cloud = numeric(no.of.timepoints)
+  water = numeric(no.of.timepoints)
+  nodata = numeric(no.of.timepoints)
+  energy = matrix(nrow = no.of.timepoints,ncol = 12)
+  if (is.null(grids)==FALSE){
+    cell.id = which(((tempdata$X %in% grids$X)==1) & ((tempdata$Y %in% grids$Y)==1))
+    cell.data = colMeans(tempdata[cell.id,3:23])/1000000
+    deforest = cell.data[year.def.col]
+    nodata = rep(cell.data[1],no.of.timepoints)
+    water = rep(cell.data[2],no.of.timepoints)
+    nonforest = rep(cell.data[3],no.of.timepoints)+water+deforest
+    cloud = rep(cell.data[4],no.of.timepoints)
+    forest = rep(cell.data[5],no.of.timepoints)
+    energy = grass.energy*nonforest + for.energy*(1-nonforest-nodata)
+  }
+  temp = cbind(X,Y,year,month,nodata,water,cloud,deforest,forest,nonforest,energy)
+  model1data = rbind(model1data,temp)
+}
+
+row.names(model1data) = 1:nrow(model1data)
+model1data = data.frame(model1data)
+colnames(model1data)[11:22] = c("Evap","Precip","Qh","Qle","Rn","Qt","Qs","Qsb",
+                               "wsoi","wisoi","SoilMoist","PAW")
+model1data = model1data[complete.cases(model1data),]
+row.names(model1data) = 1:nrow(model1data)
+dim(model1data)
+head(model1data)
+
+tapajos = model1data
+
+#-------------------------------------------------------------------------------
+#---------------Prepare the historic data for the Tucurui basin---------------------------
+#------------------------------------------------------------------------------
+
+N = dim(hist.tucurui)[1]
+
+ibisxy = tucurui.grass[,c("X","Y")]
+
+all.coords = unique(hist.tucurui[,c("X","Y")])
+tempdata = hist.tucurui[,c(1:2,7:10,12:27)]
+names(tempdata)[7] = "def00"
+tempdata$def00 = hist.tucurui$def97 + hist.tucurui$def98_00
+
+nonmissing = which(rowSums(tempdata[,3:22])>0)
+tempdata = tempdata[nonmissing,]
+
+head(tempdata)
+dim(tempdata)
+
+unique.xy = unique(tucurui.forest[,c("X","Y")])
+no.of.timepoints = dim(unique(tucurui.forest[,c("year","month")]))[1]
+model1data = c()
+
+for (i in 1:dim(unique.xy)[1]){
+  xcoord = unique.xy$X[i]
+  ycoord = unique.xy$Y[i]
+  idx = which((tucurui.forest$X==xcoord) & (tucurui.forest$Y==ycoord))
+  grass.energy = as.matrix(tucurui.grass[idx,5:16])
+  for.energy = as.matrix(tucurui.forest[idx,5:16])
+  grids = big.grids(all.coords,xcoord,ycoord)
+  X = rep(xcoord,no.of.timepoints)
+  Y = rep(ycoord,no.of.timepoints)
+  year = tucurui.forest$year[idx]
+  month = tucurui.forest$month[idx]
+  year.def.col = year-1999
+  deforest = numeric(no.of.timepoints)
+  nonforest = numeric(no.of.timepoints)
+  forest = numeric(no.of.timepoints)
+  cloud = numeric(no.of.timepoints)
+  water = numeric(no.of.timepoints)
+  energy = matrix(nrow = no.of.timepoints,ncol = 12)
+  if (is.null(grids)==FALSE){
+    cell.id = which(((tempdata$X %in% grids$X)==1) & ((tempdata$Y %in% grids$Y)==1))
+    cell.data = colMeans(tempdata[cell.id,3:22])/sum(colMeans(tempdata[cell.id,3:22]))
+    deforest = cumsum(cell.data[5:20])[year.def.col]
+    water = rep(cell.data[1],no.of.timepoints)
+    nonforest = rep(cell.data[2],no.of.timepoints)+water+deforest
+    cloud = rep(cell.data[3],no.of.timepoints)
+    forest = rep(cell.data[4],no.of.timepoints)
+    energy = grass.energy*nonforest + for.energy*(1-nonforest-nodata)
+  }
+  temp = cbind(X,Y,year,month,water,cloud,deforest,forest,nonforest,energy)
+  model1data = rbind(model1data,temp)
+}
+
+row.names(model1data) = 1:nrow(model1data)
+model1data = data.frame(model1data)
+colnames(model1data)[10:21] = c("Evap","Precip","Qh","Qle","Rn","Qt","Qs","Qsb",
+                                "wsoi","wisoi","SoilMoist","PAW")
+model1data = model1data[complete.cases(model1data),]
+row.names(model1data) = 1:nrow(model1data)
+dim(model1data)
+head(model1data)
+
+tucurui = model1data
+
+results.et <- data.analysis(tapajos,tucurui,"Evap")
+hist.tapajos.model <- results.et$model1
+hist.tucurui.model <- results.et$model2
+predict.et <- results.et$predict.tapajos(newdata)
+
+model1et <- lm(Evap ~ nonforest+factor(month),data = model1data)
+summary(model1et)
+
+model1rnet <- lm(Rn ~ nonforest+factor(month),data = model1data)
+summary(model1rnet)
+
+model1runoff <- lm(Qt ~ nonforest+factor(month),data = model1data)
+summary(model1runoff)
